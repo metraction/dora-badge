@@ -8,8 +8,12 @@ image:
 imagePullSecrets: 
   - name: github-registry-secret
 
-service:
-  type: ClusterIP
-  port: 80
-  targetPort: 8080
+ingress: 
+  enabled: true
+  host: "handler-badges.enpace.ch"
+  className: nginx
+  tls: true
+  tlsSecretName: "nextcloud-tls"
 
+service:
+  port: 8080

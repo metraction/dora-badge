@@ -6,5 +6,6 @@ images:
     ports:
       - 8080
     entrypoint: ["/ko-app/dora-badge"]
+    args: ["--config", "/config/.dora-badge.yaml"]
     labels:
       org.opencontainers.image.revision: "${GIT_COMMIT}"
