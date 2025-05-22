@@ -16,9 +16,23 @@ spec:
       labels:
         app: dora-badge
     spec:
+      containers:
+      - name: dora-badge
+        ports:
+        - containerPort: 8080
+          name: http
       imagePullSecrets: 
         - name: github-registry-secret
       containers:
       - name: dora-badge
-        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}  
+        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+        args: ["--config", "/config/.dora-badge.yaml"]
+        volumeMounts:
+          - name: config-volume
+            mountPath: /config/.dora-badge.yaml
+            subPath: .dora-badge.yaml
+      volumes:
+        - name: config-volume
+          configMap:
+            name: dora-badge-config
 

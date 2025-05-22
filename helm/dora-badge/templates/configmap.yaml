@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dora-badge-config
+  labels:
+    app: dora-badge
+data:
+  .dora-badge.yaml: |
+    project: dora-badge

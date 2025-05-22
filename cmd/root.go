@@ -11,8 +11,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Tiktai/dora-badge/model"
 	"github.com/Tiktai/dora-badge/logic"
+	"github.com/Tiktai/dora-badge/model"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -95,5 +95,5 @@ func initConfig() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.mentor-mate.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dora-badge.yaml)")
 }
