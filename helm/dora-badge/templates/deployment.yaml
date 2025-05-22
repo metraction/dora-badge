@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dora-badge
+  name: dora-badge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dora-badge
+  strategy: {}
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      labels:
+        app: dora-badge
+    spec:
+      imagePullSecrets: 
+        - name: github-registry-secret
+      containers:
+      - name: dora-badge
+        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}  
+

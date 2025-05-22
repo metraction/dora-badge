@@ -1,0 +1,4 @@
+apiVersion: v2
+name: dora-badge
+version: 0.0.1
+description: Minimalistic Helm chart for dora-badge

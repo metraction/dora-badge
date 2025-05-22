@@ -1,0 +1,15 @@
+replicaCount: 1
+image:
+  registry: ghcr.io
+  repository: tiktai/dora-badge/dora-badge-e666386c378212100ddf37486e4162a2
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets: 
+  - name: github-registry-secret
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+

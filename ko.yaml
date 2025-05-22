@@ -5,10 +5,13 @@ images:
   github.com/Tiktai/dora-badge:
     # Copy config file into image
     files:
-      - .dora-badge.yaml
+      - source: .dora-badge.yaml
+        destination: /app/.dora-badge.yaml
     env:
       CONFIG: "/app/.dora-badge.yaml"
     ports:
       - 8080
     entrypoint: ["/ko-app/dora-badge"]
     args: ["--config", "/app/.dora-badge.yaml"]
+    labels:
+      org.opencontainers.image.revision: "${GIT_COMMIT}"
