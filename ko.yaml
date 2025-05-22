@@ -1,0 +1,14 @@
+defaultBaseImage: "cgr.dev/chainguard/static:latest-glibc"
+
+# Customize the image for the main package
+images:
+  github.com/Tiktai/dora-badge:
+    # Copy config file into image
+    files:
+      - .dora-badge.yaml
+    env:
+      CONFIG: "/app/.dora-badge.yaml"
+    ports:
+      - 8080
+    entrypoint: ["/ko-app/dora-badge"]
+    args: ["--config", "/app/.dora-badge.yaml"]
