@@ -78,8 +78,8 @@ func convertDSNIfNeeded(dsn string) string {
 // startDate and finishMonth should be in 'YYYY-MM-DD' format, e.g. '2024-01-01'.
 // Only months between startDate and finishMonth (inclusive) are returned.
 func QueryDeploymentsPerMonth(dsn string, project string, startDate string, finishMonth string) ([]DeploymentMetric, error) {
-	dsn = convertDSNIfNeeded(dsn)
-	fmt.Println("Using DSN:", dsn)
+	// dsn = convertDSNIfNeeded(dsn)
+	// fmt.Println("Using DSN:", dsn)
 	// Open connection to MySQL
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {

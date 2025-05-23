@@ -1,6 +1,6 @@
 devlake:
   dbSecet: "devlake-mysql-auth"
-  dbUrlVar: "MYSQL_URL"
+  dbUrlVar: "DB_URL"
 
 replicaCount: 1
 image:
