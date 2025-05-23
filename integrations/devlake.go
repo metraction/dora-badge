@@ -3,6 +3,8 @@ package integrations
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -44,7 +46,39 @@ func FetchDevLakeProjects(dsn string) ([]string, error) {
 // QueryDeploymentsPerMonth connects to MySQL and executes the deployments per month metric query.
 // startDate and finishMonth should be in 'YYYY-MM-DD' format, e.g. '2024-01-01'.
 // Only months between startDate and finishMonth (inclusive) are returned.
+// convertDSNIfNeeded checks if the DSN is in URI format and converts it to Go MySQL driver format if needed.
+func convertDSNIfNeeded(dsn string) string {
+	if strings.HasPrefix(dsn, "mysql://") {
+		u, err := url.Parse(dsn)
+		if err != nil {
+			return dsn // fallback to original if parsing fails
+		}
+		user := ""
+		if u.User != nil {
+			user = u.User.Username()
+			if pass, ok := u.User.Password(); ok {
+				user += ":" + pass
+			}
+		}
+		host := u.Host
+		// Remove possible port if present
+		if !strings.Contains(host, ":") {
+			host += ":3306"
+		}
+		// Remove leading slash from path to get dbname
+		dbname := strings.TrimPrefix(u.Path, "/")
+		params := u.RawQuery
+		res := user + "@tcp(" + host + ")/" + dbname
+		if params != "" {
+			res += "?" + params
+		}
+		return res
+	}
+	return dsn
+}
+
 func QueryDeploymentsPerMonth(dsn string, project string, startDate string, finishMonth string) ([]DeploymentMetric, error) {
+	dsn = convertDSNIfNeeded(dsn)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to db: %w", err)
