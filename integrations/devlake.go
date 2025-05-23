@@ -42,8 +42,9 @@ func FetchDevLakeProjects(dsn string) ([]string, error) {
 }
 
 // QueryDeploymentsPerMonth connects to MySQL and executes the deployments per month metric query.
-// startDate should be in 'YYYY-MM-DD' format, e.g. '2024-01-01'
-func QueryDeploymentsPerMonth(dsn string, project string, startDate string) ([]DeploymentMetric, error) {
+// startDate and finishMonth should be in 'YYYY-MM-DD' format, e.g. '2024-01-01'.
+// Only months between startDate and finishMonth (inclusive) are returned.
+func QueryDeploymentsPerMonth(dsn string, project string, startDate string, finishMonth string) ([]DeploymentMetric, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to db: %w", err)
@@ -77,9 +78,10 @@ SELECT
 FROM 
     calendar_months cm
     LEFT JOIN _deployments d on cm.month = d.month
-WHERE cm.month_timestamp >= ?`
+WHERE cm.month_timestamp >= ?
+  AND cm.month_timestamp <= ?`
 
-	rows, err := db.Query(query, project, startDate, startDate)
+	rows, err := db.Query(query, project, startDate, startDate, finishMonth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}

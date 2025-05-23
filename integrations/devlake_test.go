@@ -39,9 +39,10 @@ func TestQueryDeploymentsPerMonth(t *testing.T) {
 	}
 
 	project := "Tiktai"       // Change as appropriate or make dynamic
-	startDate := "2025-01-01" // No time filter for test
+	startDate := "2025-05-01" // No time filter for test
 
-	metrics, err := QueryDeploymentsPerMonth(dsn, project, startDate)
+	finishMonth := "2025-05-31" // or any month-end date you want to test inclusivity
+	metrics, err := QueryDeploymentsPerMonth(dsn, project, startDate, finishMonth)
 	if err != nil && err != sql.ErrNoRows {
 		t.Fatalf("QueryDeploymentsPerMonth failed: %v", err)
 	}

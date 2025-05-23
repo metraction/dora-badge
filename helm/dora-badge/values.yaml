@@ -1,3 +1,7 @@
+devlake:
+  dbSecet: "devlake-mysql-auth"
+  dbUrlVar: "MYSQL_URL"
+
 replicaCount: 1
 image:
   registry: ghcr.io

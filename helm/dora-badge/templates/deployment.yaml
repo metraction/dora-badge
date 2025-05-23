@@ -16,17 +16,18 @@ spec:
       labels:
         app: dora-badge
     spec:
-      containers:
-      - name: dora-badge
-        ports:
-        - containerPort: 8080
-          name: http
       imagePullSecrets: 
         - name: github-registry-secret
       containers:
       - name: dora-badge
         image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
         args: ["--config", "/config/.dora-badge.yaml"]
+        env:
+          - name: DEVLAKE_DSN
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.devlake.dbSecet }}
+                key: {{ .Values.devlake.dbUrlVar }} 
         volumeMounts:
           - name: config-volume
             mountPath: /config/.dora-badge.yaml
