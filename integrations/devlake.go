@@ -43,9 +43,6 @@ func FetchDevLakeProjects(dsn string) ([]string, error) {
 	return projects, nil
 }
 
-// QueryDeploymentsPerMonth connects to MySQL and executes the deployments per month metric query.
-// startDate and finishMonth should be in 'YYYY-MM-DD' format, e.g. '2024-01-01'.
-// Only months between startDate and finishMonth (inclusive) are returned.
 // convertDSNIfNeeded checks if the DSN is in URI format and converts it to Go MySQL driver format if needed.
 func convertDSNIfNeeded(dsn string) string {
 	if strings.HasPrefix(dsn, "mysql://") {
@@ -77,8 +74,13 @@ func convertDSNIfNeeded(dsn string) string {
 	return dsn
 }
 
+// QueryDeploymentsPerMonth connects to MySQL and executes the deployments per month metric query.
+// startDate and finishMonth should be in 'YYYY-MM-DD' format, e.g. '2024-01-01'.
+// Only months between startDate and finishMonth (inclusive) are returned.
 func QueryDeploymentsPerMonth(dsn string, project string, startDate string, finishMonth string) ([]DeploymentMetric, error) {
 	dsn = convertDSNIfNeeded(dsn)
+	fmt.Println("Using DSN:", dsn)
+	// Open connection to MySQL
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to db: %w", err)
