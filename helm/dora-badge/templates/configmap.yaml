@@ -6,4 +6,4 @@ metadata:
     app: dora-badge
 data:
   .dora-badge.yaml: |
-    project: dora-badge
+    devlake_dsn: $DEVLAKE_DSN
