@@ -3,6 +3,7 @@ package integrations
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 
@@ -80,6 +81,7 @@ func convertDSNIfNeeded(dsn string) string {
 // QueryLeadTimeForChanges calculates the median lead time for changes for a project in a given period and returns the result string.
 // doraReport should be '2023' or '2021' to select the thresholds.
 func QueryLeadTimeForChanges(dsn string, project string, startDate string, finishMonth string, doraReport string) (string, error) {
+	log.Println("QueryLeadTimeForChanges", project, startDate, finishMonth, doraReport)
 	dsn = convertDSNIfNeeded(dsn)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {

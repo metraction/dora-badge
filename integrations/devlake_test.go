@@ -38,7 +38,7 @@ func TestQueryLeadTimeForChanges(t *testing.T) {
 		t.Skip("TEST_MYSQL_DSN not set; skipping integration test")
 	}
 
-	project := "Tiktai-handler" // Adjust as needed for your test DB
+	project := "Tiktai-badge" // Adjust as needed for your test DB
 	startDate := "2025-05-01"
 	finishMonth := "2025-05-31"
 	doraReport := "2023"
