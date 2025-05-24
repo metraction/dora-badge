@@ -16,8 +16,10 @@ spec:
       labels:
         app: dora-badge
     spec:
-      imagePullSecrets: 
-        - name: github-registry-secret
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - name: dora-badge
         image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}

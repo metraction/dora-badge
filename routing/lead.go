@@ -17,11 +17,11 @@ func (h *HttpHandler) HandleLeadTimeForChanges(w http.ResponseWriter, r *http.Re
 	// Calculate the first and last day of the current month
 	now := time.Now()
 	project := ""
-	if len(r.URL.Path) > len("/ltc/") {
-		project = r.URL.Path[len("/ltc/"):]
+	if len(r.URL.Path) > len("/ltfc/") {
+		project = r.URL.Path[len("/ltfc/"):]
 	}
 	if project == "" {
-		http.Error(w, "project not specified in path (use /ltc/{project})", http.StatusBadRequest)
+		http.Error(w, "project not specified in path (use /ltfc/{project})", http.StatusBadRequest)
 		return
 	}
 	startDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
