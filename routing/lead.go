@@ -41,6 +41,6 @@ func (h *HttpHandler) HandleLeadTimeForChanges(w http.ResponseWriter, r *http.Re
 	if leadTime == "N/A. Please check if you have collected deployments/pull_requests." {
 		badgeColor = logic.BadgeWarningColor
 	}
-	badge := logic.BadgeSVG("lead_time_for_changes", leadTime, badgeColor)
+	badge := logic.BadgeSVG("Lead Time for Changes", leadTime, badgeColor)
 	io.WriteString(w, badge)
 }
