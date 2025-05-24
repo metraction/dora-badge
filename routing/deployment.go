@@ -46,6 +46,6 @@ func (h *HttpHandler) HandleDeploymentsFrequency(w http.ResponseWriter, r *http.
 		log.Fatalf("QueryDeploymentsPerMonth failed: %v", err)
 	}
 	deploymentCount := df[len(df)-1].DeploymentCount
-	badge := logic.BadgeSVG("deployments_frequency", fmt.Sprintf("%d", deploymentCount), "")
+	badge := logic.BadgeSVG("Deployments Frequency", fmt.Sprintf("%d", deploymentCount), "")
 	io.WriteString(w, badge)
 }
