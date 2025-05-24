@@ -77,6 +77,75 @@ func convertDSNIfNeeded(dsn string) string {
 // QueryDeploymentsPerMonth connects to MySQL and executes the deployments per month metric query.
 // startDate and finishMonth should be in 'YYYY-MM-DD' format, e.g. '2024-01-01'.
 // Only months between startDate and finishMonth (inclusive) are returned.
+// QueryLeadTimeForChanges calculates the median lead time for changes for a project in a given period and returns the result string.
+// doraReport should be '2023' or '2021' to select the thresholds.
+func QueryLeadTimeForChanges(dsn string, project string, startDate string, finishMonth string, doraReport string) (string, error) {
+	dsn = convertDSNIfNeeded(dsn)
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return "", fmt.Errorf("failed to connect to db: %w", err)
+	}
+	defer db.Close()
+
+	query := `
+with _pr_stats as (
+    SELECT 
+        distinct pr.id,
+        ppm.pr_cycle_time
+    FROM
+        pull_requests pr 
+        join project_pr_metrics ppm on ppm.id = pr.id
+        join project_mapping pm on pr.base_repo_id = pm.row_id and pm.` + "`table`" + ` = 'repos'
+        join cicd_deployment_commits cdc on ppm.deployment_commit_id = cdc.id
+    WHERE
+      pm.project_name in (?) 
+        and pr.merged_date is not null
+        and ppm.pr_cycle_time is not null
+        and cdc.finished_date >= ?
+        and cdc.finished_date <= ?
+),
+
+_median_change_lead_time_ranks as(
+    SELECT *, percent_rank() over(order by pr_cycle_time) as ranks
+    FROM _pr_stats
+),
+
+_median_change_lead_time as(
+    SELECT max(pr_cycle_time) as median_change_lead_time
+    FROM _median_change_lead_time_ranks
+    WHERE ranks <= 0.5
+)
+
+SELECT 
+  CASE
+    WHEN (? = '2023') THEN
+            CASE
+                WHEN median_change_lead_time < 24 * 60 THEN CONCAT(round(median_change_lead_time/60,1), '(elite)')
+                WHEN median_change_lead_time < 7 * 24 * 60 THEN CONCAT(round(median_change_lead_time/60,1), '(high)')
+                WHEN median_change_lead_time < 30 * 24 * 60 THEN CONCAT(round(median_change_lead_time/60,1), '(medium)')
+                WHEN median_change_lead_time >= 30 * 24 * 60 THEN CONCAT(round(median_change_lead_time/60,1), '(low)')
+                ELSE 'N/A. Please check if you have collected deployments/pull_requests.'
+                END
+    WHEN (? = '2021') THEN
+          CASE
+                WHEN median_change_lead_time < 60 THEN CONCAT(round(median_change_lead_time/60,1), '(elite)')
+                WHEN median_change_lead_time < 7 * 24 * 60 THEN CONCAT(round(median_change_lead_time/60,1), '(high)')
+                WHEN median_change_lead_time < 180 * 24 * 60 THEN CONCAT(round(median_change_lead_time/60,1), '(medium)')
+                WHEN median_change_lead_time >= 180 * 24 * 60 THEN CONCAT(round(median_change_lead_time/60,1), '(low)')
+                ELSE 'N/A. Please check if you have collected deployments/pull_requests.'
+                END
+    ELSE 'N/A. Please check if you have collected deployments/pull_requests.'
+  END as lead_time_for_changes
+FROM _median_change_lead_time`
+
+	row := db.QueryRow(query, project, startDate, finishMonth, doraReport, doraReport)
+	var result string
+	if err := row.Scan(&result); err != nil {
+		return "", fmt.Errorf("failed to scan lead time for changes: %w", err)
+	}
+	return result, nil
+}
+
 func QueryDeploymentsPerMonth(dsn string, project string, startDate string, finishMonth string) ([]DeploymentMetric, error) {
 	dsn = convertDSNIfNeeded(dsn)
 	// Open connection to MySQL
