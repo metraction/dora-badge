@@ -36,6 +36,6 @@ jobs:
 
       - name: Push Helm chart to GHCR
         run: |
-          repo=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          # TODO: move to helm directory to avoid specific names
           CHART_VERSION=$(helm show chart helm/dora-badge | grep '^version:' | awk '{print $2}')
-          helm push dora-badge-$CHART_VERSION.tgz oci://ghcr.io/$repo/charts
+          helm push dora-badge-$CHART_VERSION.tgz oci://ghcr.io/tiktai/charts
