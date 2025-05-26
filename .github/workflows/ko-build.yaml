@@ -4,7 +4,6 @@ on:
   push:
     branches: 
     - main
-    - H-15/badge-details
 
   pull_request:
     branches: [ main ]
