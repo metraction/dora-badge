@@ -6,7 +6,7 @@ TODO:
 - Add description 
 -->
 
-Shows badges for DORA metrics
+Shows badges for DORA metrics from devlake
 
 # Getting started
 
