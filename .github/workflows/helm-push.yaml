@@ -9,32 +9,10 @@ on:
 
 jobs:
   push-helm-chart:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: v3.14.0
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Package Helm chart
-        run: |
-          helm package helm/dora-badge --destination .
-
-      - name: Push Helm chart to GHCR
-        run: |
-          # TODO: move to helm directory to avoid specific names
-          CHART_VERSION=$(helm show chart helm/dora-badge | grep '^version:' | awk '{print $2}')
-          helm push dora-badge-$CHART_VERSION.tgz oci://ghcr.io/tiktai/charts
+    uses: Tiktai/helm-publish/.github/workflows/helm-push.yaml@main
+    with:
+      chart_dir: helm/dora-badge
+      chart_name: dora-badge
+      destination: .
+      registry: oci://ghcr.io/tiktai/charts
+    secrets: inherit
