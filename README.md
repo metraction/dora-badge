@@ -6,6 +6,7 @@ TODO:
 - Add description 
 -->
 
+Shows badges for DORA metrics
 
 # Getting started
 
