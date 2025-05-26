@@ -4,12 +4,13 @@ on:
   push:
     branches:
       - main
+      - H-15/badge-details
     tags:
       - 'v*'
 
 jobs:
   push-helm-chart:
-    uses: Tiktai/github/workflow-templates/helm-push.yaml@main
+    uses: Tiktai/.github/workflow-templates/helm-push.yaml@main
     with:
       chart_dir: helm/dora-badge
       chart_name: dora-badge
