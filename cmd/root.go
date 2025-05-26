@@ -28,10 +28,15 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// Start HTTP server
 		handler := routing.NewHttpHandler(config)
-		http.HandleFunc("/df/", handler.HandleDeploymentsFrequency)
-		http.HandleFunc("/ltfc/", handler.HandleLeadTimeForChanges)
+		http.HandleFunc("/v1/{project}/df", handler.HandleDeploymentsFrequency)
+		http.HandleFunc("/v1/{project}/ltfc", handler.HandleLeadTimeForChanges)
+		http.HandleFunc("/v1/{project}/ltfc-stats", handler.HandleLeadTimeForChangesStats)
 
-		fmt.Println("Starting HTTP server on :8080 ...")
+		// TODO: Remove in v2 those legacy paths
+		http.HandleFunc("/df/{project}", handler.HandleDeploymentsFrequency)
+		http.HandleFunc("/ltfc/{project}", handler.HandleLeadTimeForChanges)
+
+		fmt.Println("Starting Badge HTTP server on :8080 ...")
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			log.Fatalf("Failed to start server: %v", err)
 		}

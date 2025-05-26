@@ -16,6 +16,26 @@ type DeploymentMetric struct {
 	DeploymentCount int
 }
 
+const _pr_stats = `
+    SELECT 
+        distinct pr.id,
+        pr.merge_commit_sha,
+        pr.merged_date,
+        cdc.finished_date,
+        ppm.pr_cycle_time
+    FROM
+        pull_requests pr 
+        join project_pr_metrics ppm on ppm.id = pr.id
+        join project_mapping pm on pr.base_repo_id = pm.row_id and pm.` + "`table`" + ` = 'repos'
+        join cicd_deployment_commits cdc on ppm.deployment_commit_id = cdc.id
+    WHERE
+      pm.project_name in (?) 
+        and pr.merged_date is not null
+        and ppm.pr_cycle_time is not null
+        and cdc.finished_date >= ?
+        and cdc.finished_date <= ?
+`
+
 // FetchDevLakeProjects returns a list of unique project names from the project_mapping table.
 func FetchDevLakeProjects(dsn string) ([]string, error) {
 	db, err := sql.Open("mysql", dsn)
@@ -91,20 +111,7 @@ func QueryLeadTimeForChanges(dsn string, project string, startDate string, finis
 
 	query := `
 with _pr_stats as (
-    SELECT 
-        distinct pr.id,
-        ppm.pr_cycle_time
-    FROM
-        pull_requests pr 
-        join project_pr_metrics ppm on ppm.id = pr.id
-        join project_mapping pm on pr.base_repo_id = pm.row_id and pm.` + "`table`" + ` = 'repos'
-        join cicd_deployment_commits cdc on ppm.deployment_commit_id = cdc.id
-    WHERE
-      pm.project_name in (?) 
-        and pr.merged_date is not null
-        and ppm.pr_cycle_time is not null
-        and cdc.finished_date >= ?
-        and cdc.finished_date <= ?
+    ` + _pr_stats + `
 ),
 
 _median_change_lead_time_ranks as(
@@ -146,6 +153,50 @@ FROM _median_change_lead_time`
 		return "", fmt.Errorf("failed to scan lead time for changes: %w", err)
 	}
 	return result, nil
+}
+
+type LeadTimeForChangesStats struct {
+	PrId           string
+	MergeCommitSHA string
+	MergedDate     string
+	FinishedDate   string
+	PrCycleTime    int
+}
+
+func QueryLeadTimeForChangesStats(dsn string, project string, startDate string, finishMonth string, doraReport string) ([]LeadTimeForChangesStats, error) {
+	dsn = convertDSNIfNeeded(dsn)
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to db: %w", err)
+	}
+	defer db.Close()
+
+	query := _pr_stats
+
+	rows, err := db.Query(query, project, startDate, finishMonth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	var stats []LeadTimeForChangesStats
+	for rows.Next() {
+		var stat LeadTimeForChangesStats
+		if err := rows.Scan(
+			&stat.PrId,
+			&stat.MergeCommitSHA,
+			&stat.MergedDate,
+			&stat.FinishedDate,
+			&stat.PrCycleTime,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		stats = append(stats, stat)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return stats, nil
 }
 
 func QueryDeploymentsPerMonth(dsn string, project string, startDate string, finishMonth string) ([]DeploymentMetric, error) {
