@@ -26,12 +26,9 @@ func (h *HttpHandler) HandleDeploymentsFrequency(w http.ResponseWriter, r *http.
 	// Calculate the first and last day of the current month
 	now := time.Now()
 	// Extract project from URL path: /df/{project}
-	project := ""
-	if len(r.URL.Path) > len("/df/") {
-		project = r.URL.Path[len("/df/"):]
-	}
+	project := r.PathValue("project")
 	if project == "" {
-		http.Error(w, "project not specified in path (use /df/{project})", http.StatusBadRequest)
+		http.Error(w, "project not specified in path (use /v1/{project})/df", http.StatusBadRequest)
 		return
 	}
 	startDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
