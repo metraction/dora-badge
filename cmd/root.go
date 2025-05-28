@@ -28,13 +28,21 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// Start HTTP server
 		handler := routing.NewHttpHandler(config)
-		http.HandleFunc("/v1/{project}/df", handler.HandleDeploymentsFrequency)
-		http.HandleFunc("/v1/{project}/ltfc", handler.HandleLeadTimeForChanges)
-		http.HandleFunc("/v1/{project}/ltfc-stats", handler.HandleLeadTimeForChangesStats)
+
+		cacheControlMiddleware := func(h http.HandlerFunc) http.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
+				h(w, r)
+			}
+		}
+
+		http.HandleFunc("/v1/{project}/df", cacheControlMiddleware(handler.HandleDeploymentsFrequency))
+		http.HandleFunc("/v1/{project}/ltfc", cacheControlMiddleware(handler.HandleLeadTimeForChanges))
+		http.HandleFunc("/v1/{project}/ltfc-stats", cacheControlMiddleware(handler.HandleLeadTimeForChangesStats))
 
 		// TODO: Remove in v2 those legacy paths
-		http.HandleFunc("/df/{project}", handler.HandleDeploymentsFrequency)
-		http.HandleFunc("/ltfc/{project}", handler.HandleLeadTimeForChanges)
+		http.HandleFunc("/df/{project}", cacheControlMiddleware(handler.HandleDeploymentsFrequency))
+		http.HandleFunc("/ltfc/{project}", cacheControlMiddleware(handler.HandleLeadTimeForChanges))
 
 		fmt.Println("Starting Badge HTTP server on :8080 ...")
 		if err := http.ListenAndServe(":8080", nil); err != nil {
