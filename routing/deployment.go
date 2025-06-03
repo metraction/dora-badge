@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Tiktai/dora-badge/integrations"
-	"github.com/Tiktai/dora-badge/logic"
-	"github.com/Tiktai/dora-badge/model"
+	"github.com/metraction/dora-badge/integrations"
+	"github.com/metraction/dora-badge/logic"
+	"github.com/metraction/dora-badge/model"
 )
 
 type HttpHandler struct {

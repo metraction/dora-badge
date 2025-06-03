@@ -4,15 +4,16 @@ on:
   push:
     branches:
       - main
+      - DR-12*
     tags:
       - 'v*'
 
 jobs:
   push-helm-chart:
-    uses: Tiktai/helm-publish/.github/workflows/helm-push.yaml@main
+    uses: metraction/helm-publish/.github/workflows/helm-push.yaml@main
     with:
       chart_dir: helm/dora-badge
       chart_name: dora-badge
       destination: .
-      registry: oci://ghcr.io/tiktai/charts
+      registry: oci://ghcr.io/metraction/charts
     secrets: inherit
