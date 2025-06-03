@@ -4,6 +4,7 @@ import "fmt"
 
 const BadgeWarningColor = "#dfb317"
 const BadgeSuccessColor = "#4c1"
+const BadgeErrorColor = "#df2935"
 
 // BadgeSVG renders an SVG badge with the given text, value, and optional color (defaults to green if empty).
 func BadgeSVG(text, value, color string) string {

@@ -10,12 +10,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// DeploymentMetric holds the result for deployments per month
-type DeploymentMetric struct {
-	Month           string
-	DeploymentCount int
-}
-
 const _pr_stats = `
     SELECT 
         distinct pr.id,
@@ -36,32 +30,14 @@ const _pr_stats = `
         and cdc.finished_date <= ?
 `
 
-// FetchDevLakeProjects returns a list of unique project names from the project_mapping table.
-func FetchDevLakeProjects(dsn string) ([]string, error) {
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to db: %w", err)
-	}
-	defer db.Close()
+// DevlakeIntegration holds the DSN and provides methods for querying DevLake metrics.
+type DevlakeIntegration struct {
+	DSN string
+}
 
-	rows, err := db.Query("SELECT DISTINCT project_name FROM project_mapping ORDER BY project_name")
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch projects: %w", err)
-	}
-	defer rows.Close()
-
-	var projects []string
-	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
-			return nil, fmt.Errorf("failed to scan project name: %w", err)
-		}
-		projects = append(projects, name)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return projects, nil
+// NewDevlakeIntegration creates a new DevlakeIntegration instance with the provided DSN.
+func NewDevlakeIntegration(dsn string) *DevlakeIntegration {
+	return &DevlakeIntegration{DSN: convertDSNIfNeeded(dsn)}
 }
 
 // convertDSNIfNeeded checks if the DSN is in URI format and converts it to Go MySQL driver format if needed.
@@ -95,15 +71,113 @@ func convertDSNIfNeeded(dsn string) string {
 	return dsn
 }
 
+// FetchDevLakeProjects returns a list of unique project names from the project_mapping table.
+func (d *DevlakeIntegration) FetchDevLakeProjects() ([]string, error) {
+	db, err := sql.Open("mysql", d.DSN)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to db: %w", err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT DISTINCT project_name FROM project_mapping ORDER BY project_name")
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch projects: %w", err)
+	}
+	defer rows.Close()
+
+	var projects []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, fmt.Errorf("failed to scan project name: %w", err)
+		}
+		projects = append(projects, name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return projects, nil
+}
+
+type QueryDeployment struct {
+	Project     string
+	StartDate   string
+	FinishMonth string
+}
+
+// DeploymentMetric holds the result for deployments per month
+type DeploymentMetric struct {
+	Month           string
+	DeploymentCount int
+}
+
 // QueryDeploymentsPerMonth connects to MySQL and executes the deployments per month metric query.
 // startDate and finishMonth should be in 'YYYY-MM-DD' format, e.g. '2024-01-01'.
 // Only months between startDate and finishMonth (inclusive) are returned.
+
+func (d *DevlakeIntegration) QueryDeploymentsPerMonth(q QueryDeployment) ResponseWithError[[]DeploymentMetric] {
+	// Open connection to MySQL
+	db, err := sql.Open("mysql", d.DSN)
+	if err != nil {
+		return ResponseWithError[[]DeploymentMetric]{Err: fmt.Errorf("failed to connect to db: %w", err)}
+	}
+	defer db.Close()
+
+	// The metric query, using only parameter placeholders
+	query := `
+WITH _deployments AS (
+    SELECT 
+        date_format(deployment_finished_date,'%y/%m') as month,
+        count(cicd_deployment_id) as deployment_count
+    FROM (
+        SELECT
+            cdc.cicd_deployment_id,
+            max(cdc.finished_date) as deployment_finished_date
+        FROM cicd_deployment_commits cdc
+        JOIN project_mapping pm on cdc.cicd_scope_id = pm.row_id and pm.table = 'cicd_scopes'
+        WHERE
+            pm.project_name = ?
+            and cdc.result = 'SUCCESS'
+            and cdc.environment = 'PRODUCTION'
+            and cdc.finished_date >= ?
+        GROUP BY 1
+    ) _production_deployments
+    GROUP BY 1
+)
+SELECT 
+    cm.month, 
+    CASE WHEN d.deployment_count IS NULL THEN 0 ELSE d.deployment_count END as deployment_count
+FROM 
+    calendar_months cm
+    LEFT JOIN _deployments d on cm.month = d.month
+WHERE cm.month_timestamp >= ?
+  AND cm.month_timestamp <= ?`
+
+	rows, err := db.Query(query, q.Project, q.StartDate, q.StartDate, q.FinishMonth)
+	if err != nil {
+		return ResponseWithError[[]DeploymentMetric]{Err: fmt.Errorf("failed to execute query: %w", err)}
+	}
+	defer rows.Close()
+
+	var results []DeploymentMetric
+	for rows.Next() {
+		var m DeploymentMetric
+		if err := rows.Scan(&m.Month, &m.DeploymentCount); err != nil {
+			return ResponseWithError[[]DeploymentMetric]{Err: fmt.Errorf("failed to scan row: %w", err)}
+		}
+		results = append(results, m)
+	}
+	if err := rows.Err(); err != nil {
+		return ResponseWithError[[]DeploymentMetric]{Err: err}
+	}
+	return ResponseWithError[[]DeploymentMetric]{Response: results}
+}
+
 // QueryLeadTimeForChanges calculates the median lead time for changes for a project in a given period and returns the result string.
 // doraReport should be '2023' or '2021' to select the thresholds.
-func QueryLeadTimeForChanges(dsn string, project string, startDate string, finishMonth string, doraReport string) (string, error) {
+func (d *DevlakeIntegration) QueryLeadTimeForChanges(project string, startDate string, finishMonth string, doraReport string) (string, error) {
 	log.Println("QueryLeadTimeForChanges", project, startDate, finishMonth, doraReport)
-	dsn = convertDSNIfNeeded(dsn)
-	db, err := sql.Open("mysql", dsn)
+	db, err := sql.Open("mysql", d.DSN)
 	if err != nil {
 		return "", fmt.Errorf("failed to connect to db: %w", err)
 	}
@@ -163,9 +237,8 @@ type LeadTimeForChangesStats struct {
 	PrCycleTime    int
 }
 
-func QueryLeadTimeForChangesStats(dsn string, project string, startDate string, finishMonth string, doraReport string) ([]LeadTimeForChangesStats, error) {
-	dsn = convertDSNIfNeeded(dsn)
-	db, err := sql.Open("mysql", dsn)
+func (d *DevlakeIntegration) QueryLeadTimeForChangesStats(project string, startDate string, finishMonth string, doraReport string) ([]LeadTimeForChangesStats, error) {
+	db, err := sql.Open("mysql", d.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to db: %w", err)
 	}
@@ -197,63 +270,4 @@ func QueryLeadTimeForChangesStats(dsn string, project string, startDate string, 
 		return nil, err
 	}
 	return stats, nil
-}
-
-func QueryDeploymentsPerMonth(dsn string, project string, startDate string, finishMonth string) ([]DeploymentMetric, error) {
-	dsn = convertDSNIfNeeded(dsn)
-	// Open connection to MySQL
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to db: %w", err)
-	}
-	defer db.Close()
-
-	// The metric query, using only parameter placeholders
-	query := `
-WITH _deployments AS (
-    SELECT 
-        date_format(deployment_finished_date,'%y/%m') as month,
-        count(cicd_deployment_id) as deployment_count
-    FROM (
-        SELECT
-            cdc.cicd_deployment_id,
-            max(cdc.finished_date) as deployment_finished_date
-        FROM cicd_deployment_commits cdc
-        JOIN project_mapping pm on cdc.cicd_scope_id = pm.row_id and pm.table = 'cicd_scopes'
-        WHERE
-            pm.project_name = ?
-            and cdc.result = 'SUCCESS'
-            and cdc.environment = 'PRODUCTION'
-            and cdc.finished_date >= ?
-        GROUP BY 1
-    ) _production_deployments
-    GROUP BY 1
-)
-SELECT 
-    cm.month, 
-    CASE WHEN d.deployment_count IS NULL THEN 0 ELSE d.deployment_count END as deployment_count
-FROM 
-    calendar_months cm
-    LEFT JOIN _deployments d on cm.month = d.month
-WHERE cm.month_timestamp >= ?
-  AND cm.month_timestamp <= ?`
-
-	rows, err := db.Query(query, project, startDate, startDate, finishMonth)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
-	}
-	defer rows.Close()
-
-	var results []DeploymentMetric
-	for rows.Next() {
-		var m DeploymentMetric
-		if err := rows.Scan(&m.Month, &m.DeploymentCount); err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
-		}
-		results = append(results, m)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return results, nil
 }

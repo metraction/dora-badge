@@ -22,8 +22,8 @@ func (h *HttpHandler) HandleLeadTimeForChanges(w http.ResponseWriter, r *http.Re
 		return
 	}
 	startDate, endDate := thisMonth()
-	leadTime, err := integrations.QueryLeadTimeForChanges(
-		h.config.DevLakeDSN,
+	devlake := integrations.NewDevlakeIntegration(h.config.DevLakeDSN)
+	leadTime, err := devlake.QueryLeadTimeForChanges(
 		project,
 		startDate.Format("2006-01-02"),
 		endDate.Format("2006-01-02"),
@@ -52,8 +52,8 @@ func (h *HttpHandler) HandleLeadTimeForChangesStats(w http.ResponseWriter, r *ht
 		return
 	}
 	startDate, endDate := thisMonth()
-	stats, err := integrations.QueryLeadTimeForChangesStats(
-		h.config.DevLakeDSN,
+	devlake := integrations.NewDevlakeIntegration(h.config.DevLakeDSN)
+	stats, err := devlake.QueryLeadTimeForChangesStats(
 		project,
 		startDate.Format("2006-01-02"),
 		endDate.Format("2006-01-02"),

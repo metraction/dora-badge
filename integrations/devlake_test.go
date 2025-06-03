@@ -15,7 +15,8 @@ func TestFetchDevLakeProjects(t *testing.T) {
 		t.Skip("TEST_MYSQL_DSN not set; skipping integration test")
 	}
 
-	projects, err := FetchDevLakeProjects(dsn)
+	devlake := NewDevlakeIntegration(dsn)
+	projects, err := devlake.FetchDevLakeProjects()
 	if err != nil {
 		t.Fatalf("FetchDevLakeProjects failed: %v", err)
 	}
@@ -43,7 +44,8 @@ func TestQueryLeadTimeForChanges(t *testing.T) {
 	finishMonth := "2025-05-31"
 	doraReport := "2023"
 
-	result, err := QueryLeadTimeForChanges(dsn, project, startDate, finishMonth, doraReport)
+	devlake := NewDevlakeIntegration(dsn)
+	result, err := devlake.QueryLeadTimeForChanges(project, startDate, finishMonth, doraReport)
 	if err != nil && err != sql.ErrNoRows {
 		t.Fatalf("QueryLeadTimeForChanges failed: %v", err)
 	}
@@ -64,12 +66,18 @@ func TestQueryDeploymentsPerMonth(t *testing.T) {
 	startDate := "2025-05-01" // No time filter for test
 
 	finishMonth := "2025-05-31" // or any month-end date you want to test inclusivity
-	metrics, err := QueryDeploymentsPerMonth(dsn, project, startDate, finishMonth)
-	if err != nil && err != sql.ErrNoRows {
-		t.Fatalf("QueryDeploymentsPerMonth failed: %v", err)
+	devlake := NewDevlakeIntegration(dsn)
+	q := QueryDeployment{
+		Project:     project,
+		StartDate:   startDate,
+		FinishMonth: finishMonth,
+	}
+	metrics := devlake.QueryDeploymentsPerMonth(q)
+	if metrics.Err != nil {
+		t.Fatalf("QueryDeploymentsPerMonth failed: %v", metrics.Err)
 	}
 
-	for _, m := range metrics {
+	for _, m := range metrics.Response {
 		fmt.Printf("Month: %s, Deployments: %d\n", m.Month, m.DeploymentCount)
 	}
 }
