@@ -11,8 +11,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Tiktai/dora-badge/model"
-	"github.com/Tiktai/dora-badge/routing"
+	"github.com/metraction/dora-badge/model"
+	"github.com/metraction/dora-badge/routing"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

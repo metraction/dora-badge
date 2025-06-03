@@ -1,4 +1,4 @@
-module github.com/Tiktai/dora-badge
+module github.com/metraction/dora-badge
 
 go 1.22.12
 

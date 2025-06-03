@@ -2,7 +2,7 @@ defaultBaseImage: "cgr.dev/chainguard/static:latest-glibc"
 
 # Customize the image for the main package
 images:
-  github.com/Tiktai/dora-badge:
+  github.com/metraction/dora-badge:
     ports:
       - 8080
     entrypoint: ["/ko-app/dora-badge"]

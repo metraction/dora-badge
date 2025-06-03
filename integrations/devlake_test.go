@@ -38,7 +38,7 @@ func TestQueryLeadTimeForChanges(t *testing.T) {
 		t.Skip("TEST_MYSQL_DSN not set; skipping integration test")
 	}
 
-	project := "Tiktai-badge" // Adjust as needed for your test DB
+	project := "metraction-badge" // Adjust as needed for your test DB
 	startDate := "2025-05-01"
 	finishMonth := "2025-05-31"
 	doraReport := "2023"
@@ -60,7 +60,7 @@ func TestQueryDeploymentsPerMonth(t *testing.T) {
 		t.Skip("TEST_MYSQL_DSN not set; skipping integration test")
 	}
 
-	project := "Tiktai"       // Change as appropriate or make dynamic
+	project := "metraction"   // Change as appropriate or make dynamic
 	startDate := "2025-05-01" // No time filter for test
 
 	finishMonth := "2025-05-31" // or any month-end date you want to test inclusivity

@@ -4,14 +4,19 @@ on:
   push:
     branches: 
     - main
+    - DB-12/*
     tags:
     - 'v*'
 
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   ko-build:
-    uses: Tiktai/helm-publish/.github/workflows/ko-build.yaml@main
+    uses: metraction/github-actions/.github/workflows/ko-build.yaml@main
     secrets: inherit
         

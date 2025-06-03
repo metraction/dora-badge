@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Tiktai/dora-badge/integrations"
-	"github.com/Tiktai/dora-badge/logic"
+	"github.com/metraction/dora-badge/integrations"
+	"github.com/metraction/dora-badge/logic"
 )
 
 // HandleLeadTimeForChanges serves a badge for lead time for changes for the current month for a project.
