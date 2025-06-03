@@ -10,7 +10,7 @@ on:
 
 jobs:
   push-helm-chart:
-    uses: metraction/helm-publish/.github/workflows/helm-push.yaml@main
+    uses: metraction/github-actions/.github/workflows/helm-push.yaml@main
     with:
       chart_dir: helm/dora-badge
       chart_name: dora-badge
