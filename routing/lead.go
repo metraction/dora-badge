@@ -71,8 +71,7 @@ func (h *HttpHandler) HandleLeadTimeForChangesStats(w http.ResponseWriter, r *ht
 
 func thisMonth() (time.Time, time.Time) {
 	now := time.Now()
-	startDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	nextMonth := startDate.AddDate(0, 1, 0)
-	endDate := nextMonth.Add(-time.Second)
+	startDate := now.AddDate(0, 0, -31)
+	endDate := now.AddDate(0, 0, 1)
 	return startDate, endDate
 }
