@@ -5,7 +5,7 @@ devlake:
 replicaCount: 1
 image:
   registry: ghcr.io
-  repository: metraction/dora-badge/dora-badge-be94f06b04666418fd00ff5f873d30e1
+  repository: metraction/dora-badge/dora-badge
   pullPolicy: Always
 
 imagePullSecrets: 
